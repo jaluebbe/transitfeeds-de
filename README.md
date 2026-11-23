@@ -22,6 +22,7 @@ other regions need their own.
 | `loggers/openboards_logger.py` | DB OpenBoards departures of a few stations (raw responses) |
 | `stations/openstation_netex.py` | Download DB OpenStation NeTEx (all stations) as `stations.csv` |
 | `stations/filter_stations.py` | Reduce it to the stations of a filtered GTFS, one row per EVA number |
+| `numbers/train_numbers.py` | Train numbers of one day from the timetable, by line, station and departure |
 
 ## Setup
 
@@ -50,6 +51,22 @@ python stations/openstation_netex.py openstation_out
 python stations/filter_stations.py openstation_out/stations.csv stations_hamburg.csv \
     --gtfs-stops hamburg_gtfs_YYYYMMDD/stop_ids.txt --prefix de:02000
 ```
+
+Train numbers, daily (S-Bahn and regional trains; the U-Bahn number comes from
+GTI or SIRI, AKN numbers from SIRI):
+
+```
+python numbers/train_numbers.py data/gtfs/hamburg_gtfs_YYYYMMDD.zip --region regions/hamburg.json \
+    --date 2026-11-23 --stations stations_hamburg.csv    # data/numbers/train_numbers_20261123.json
+```
+
+Each key `LINE|de:<AGS>:<station>|YYYY-MM-DDTHH:MM` (planned local departure)
+holds `[number, next station]` pairs: trains of one line leaving a station in
+the same minute (opposite directions, coupled trains) share a key and differ in
+the next station. `--stations` merges stations the timetable names by EVA number
+(`de:02000:8000147`) into their DHID (`de:02000:49950`). Checked on 23.11.2026
+against OpenBoards: 3511 departures found with the right number, 10 with another
+one, 57 not found.
 
 ## Findings
 
