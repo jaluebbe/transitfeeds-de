@@ -1,22 +1,18 @@
-"""Train numbers of one service day from a (filtered) GTFS feed, for lookup by line, stop and time.
+"""Train numbers of one service day from a (filtered) GTFS feed.
 
 Usage:
   python numbers/train_numbers.py GTFS_DIR_OR_ZIP --region regions/hamburg.json --date 2026-11-23 [--out data/numbers]
 
-For the agencies in the region's "train_number_agencies" (rail route types only),
-trip_short_name is the train number (zero-padded, e.g. 011546 = 11546). Writes
-train_numbers_YYYYMMDD.json:
+For the region's "train_number_agencies" (rail route types only), trip_short_name
+is the train number (011546 = 11546). Writes train_numbers_YYYYMMDD.json:
 
   {"date": "2026-11-23",
    "stops": {"RE7|de:02000:10950|2026-11-23T10:05": [["11546", "de:02000:10951"]], ...},
    "trips": {"<trip_id>": "11546", ...}}
 
-Stop keys use the station part of the stop ID (de:<AGS>:<number>, stop groups
-"_G" and, with --stations, EVA-named stations merged) and the planned
-local departure, so overnight trips get the next day's date; the last stop has
-none. Each entry is [train number, next station]: trains of the same line leaving
-a station in the same minute (opposite directions, coupled trains) share a key,
-and the next station tells them apart.
+Keys: line, station (de:<AGS>:<number>) and planned local departure. Trains of
+one line leaving a station in the same minute share a key; the next station
+tells them apart. --stations merges stations named by EVA number into their DHID.
 """
 
 import argparse
@@ -67,14 +63,13 @@ def active_services(feed: Feed, day: date) -> set:
 
 
 def station_of(stop_id: str, aliases: dict | None = None) -> str:
-    """de:<AGS>:<number> of a stop; "_G" (stop group) dropped, aliases applied."""
+    """de:<AGS>:<number> of a stop, without "_G" (stop group)."""
     station = ":".join(stop_id.split(":")[:3]).removesuffix("_G")
     return (aliases or {}).get(station, station)
 
 
 def eva_aliases(path: Path) -> dict:
-    """Stations named by an EVA number (de:02000:8000147) -> the station's DHID
-    in OpenStation (de:02000:49950), from filter_stations.py output."""
+    """de:02000:8000147 -> de:02000:49950, from filter_stations.py output."""
     aliases = {}
     with open(path, encoding="utf-8") as f:
         for r in csv.DictReader(f):

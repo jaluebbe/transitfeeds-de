@@ -1,11 +1,11 @@
 """Download DB OpenStation NeTEx and write a station table (EVA, DHID, name, ...).
 
 Usage:
-  DB_CLIENT_ID=... DB_API_KEY=... python openstation_netex.py OUT_DIR [--param key=value ...]
-  python openstation_netex.py OUT_DIR --file netex.xml      # parse a saved file only
+  DB_CLIENT_ID=... DB_API_KEY=... python stations/openstation_netex.py OUT_DIR
+  python stations/openstation_netex.py OUT_DIR --file netex.xml
 
-Follows the Link rel="next" header (about 57 pages of 6 MB), writes
-stations.csv and keeps the first page as netex_000.xml (all pages with --keep).
+Follows the paging links (about 57 pages), writes stations.csv and keeps the
+first page as netex_000.xml (all with --keep).
 """
 import argparse
 import csv
@@ -28,8 +28,8 @@ def local(tag):
 
 
 def stations(data):
-    """Yield one dict per StopPlace from its own keyList and name;
-    several EVA numbers (e.g. main line and S-Bahn) are joined with ";"."""
+    """One dict per StopPlace from its own keyList and name; several EVA
+    numbers (main line, S-Bahn) are joined with ";"."""
     for _, el in ET.iterparse(io.BytesIO(data), events=("end",)):
         if local(el.tag) != "StopPlace":
             continue
