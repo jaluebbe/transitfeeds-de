@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.env
+certs/
+secrets/
+data/
+*.pb
+*.jsonl
+*.jsonl.gz

@@ -1,0 +1,78 @@
+# Example for the Hamburg region. URLs and keys come from .env next to this file.
+x-logger: &logger
+  image: transitfeeds-logger
+  restart: unless-stopped
+  volumes:
+    - ./certs:/certs:ro
+
+services:
+  delfi-logger:
+    <<: *logger
+    build: .
+    volumes:
+      - ./certs:/certs:ro
+      - ./data/delfi:/data
+    environment:
+      DELFI_URL: ${DELFI_URL}
+      INTERVAL: "30"
+      ROUTE_PREFIXES: "de:hvv:U,de:hvv:S,de:hvv:A,de:hvv:RB,de:hvv:RE"
+      # route_ids.txt from gtfs/filter_gtfs.py in ./data/delfi adds numeric route IDs
+
+  siri-spnv:
+    <<: *logger
+    command: ["python", "-u", "siri_logger.py"]
+    volumes:
+      - ./certs:/certs:ro
+      - ./data/siri:/data
+    environment:
+      SIRI_URL: ${SIRI_SPNV_URL}
+      INTERVAL: "120"
+      SIRI_OPERATORS: "0S"  # S-Bahn Hamburg
+      SIRI_LINES: "RB31,RB32,RB33,RB37,RB38,RB41,RB47,RB60,RB61,RB62,RB71,RB81,RB82,RE1,RE2,RE20,RE3,RE4,RE5,RE6,RE7,RE70,RE8,RE80,RE83"
+      SIRI_NEAR_CATEGORIES: "RE,RB"
+      SIRI_NEAR_STOPS: "8002549,8002553,8000147"  # main-line EVA of Hbf, Altona, Harburg
+
+  siri-nahsh:
+    <<: *logger
+    command: ["python", "-u", "siri_logger.py"]
+    volumes:
+      - ./certs:/certs:ro
+      - ./data/siri:/data
+    environment:
+      SIRI_URL: ${SIRI_NAHSH_URL}
+      SIRI_NAME: nahsh
+      INTERVAL: "120"
+      SIRI_LINE_PREFIXES: "de:hvv:A,de:hvv:RB"  # AKN, Nordbahn
+
+  siri-vbn:
+    <<: *logger
+    command: ["python", "-u", "siri_logger.py"]
+    volumes:
+      - ./certs:/certs:ro
+      - ./data/siri:/data
+    environment:
+      SIRI_URL: ${SIRI_VBN_URL}
+      SIRI_NAME: vbn
+      INTERVAL: "120"
+      SIRI_CATEGORIES: "Fähre,U-Bahn"
+
+  alerts-logger:
+    <<: *logger
+    command: ["python", "-u", "alerts_logger.py"]
+    volumes:
+      - ./certs:/certs:ro
+      - ./data/alerts:/data
+    environment:
+      ALERTS_URL: ${ALERTS_URL}
+      INTERVAL: "60"
+
+  openboards-logger:
+    <<: *logger
+    command: ["python", "-u", "openboards_logger.py"]
+    volumes:
+      - ./data/openboards:/data
+    environment:
+      DB_CLIENT_ID: ${DB_CLIENT_ID}
+      DB_API_KEY: ${DB_API_KEY}
+      INTERVAL: "120"
+      EVA_NUMBERS: "8002549,8002548,8002553,8000147,8000908"  # Hbf, Dammtor, Altona, Harburg, Berliner Tor

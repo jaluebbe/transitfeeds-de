@@ -1,0 +1,16 @@
+{
+  "name": "Hamburg (HVV rail and ferries)",
+  "agencies": ["15141", "10375", "10833", "15139"],
+  "agency_names": {
+    "15141": "Hochbahn U-Bahn",
+    "10375": "S-Bahn Hamburg",
+    "10833": "AKN",
+    "15139": "HADAG"
+  },
+  "lines": [
+    "RB31", "RB32", "RB33", "RB37", "RB38", "RB41", "RB47", "RB60", "RB61", "RB62", "RB71",
+    "RB81", "RB82", "RE1", "RE2", "RE20", "RE3", "RE4", "RE5", "RE6", "RE6x", "RE7", "RE70",
+    "RE8", "RE80", "RE83"
+  ],
+  "line_stop_prefix": "de:02000:"
+}
