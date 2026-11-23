@@ -1,11 +1,8 @@
 """Download the newest DELFI GTFS feed and reduce it to a region.
 
-The download address is not part of the repository: set DELFI_GTFS_URL in the
-environment or in a .env file in the working directory, with {date} (YYYYMMDD)
-where the feed's date stands in the file name. The newest date from tomorrow
-back --days that exists and is not stored yet is fetched, reduced with
-filter_gtfs.py and saved as <prefix>_gtfs_YYYYMMDD.zip. Nothing is stored when
-there is no new feed, so it can run daily, e.g. from cron:
+DELFI_GTFS_URL (environment or ./.env) holds the download address with {date}
+(YYYYMMDD). The newest feed not stored yet is reduced with filter_gtfs.py and
+saved as <prefix>_gtfs_YYYYMMDD.zip. Meant for a daily cron job:
 
   17 6 * * *  cd /path/to/transitfeeds-de && python gtfs/fetch_delfi.py --region regions/hamburg.json
 """

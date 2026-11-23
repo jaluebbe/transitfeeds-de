@@ -2,8 +2,7 @@
 
 Writes one JSON line per feed update to DATA_DIR/siri[_NAME]_YYYYMMDD.jsonl.gz (UTC day)
 and one line per cancelled/extra journey or cancelled call to DATA_DIR/siri[_NAME]_events.jsonl.
-A journey is kept if it matches any of the four filters, or if its category is
-in SIRI_NEAR_CATEGORIES and it calls at a stop of a journey kept by operator.
+A journey is kept if it matches any of the filters below.
 
 Environment:
   SIRI_URL         feed URL (required, e.g. the Mobilithek subscription URL)
@@ -15,10 +14,10 @@ Environment:
   SIRI_LINE_PREFIXES  comma-separated LineRef prefixes to keep, e.g. de:hvv:A (default none)
   SIRI_CATEGORIES  comma-separated ProductCategoryRef values to keep, e.g. U-Bahn,Fähre (default none)
   SIRI_LINES       comma-separated PublishedLineName values to keep, e.g. RE7,RB81 (default none)
-  SIRI_NEAR_CATEGORIES  categories kept when calling at a stop of the operator's journeys,
-                   e.g. RE,RB for regional trains at S-Bahn stations (default none)
-  SIRI_NEAR_STOPS  extra stops for SIRI_NEAR_CATEGORIES, e.g. main-line EVA numbers of
-                   stations whose S-Bahn platforms have their own number (default none)
+  SIRI_NEAR_CATEGORIES  categories kept when calling at a stop of a journey kept
+                   by SIRI_OPERATORS, e.g. RE,RB (default none)
+  SIRI_NEAR_STOPS  further stops for SIRI_NEAR_CATEGORIES, e.g. main-line EVA numbers
+                   where the S-Bahn has its own (default none)
 
 Use --file FEED.xml --once to parse a saved feed instead of downloading.
 """
@@ -119,7 +118,7 @@ def is_wanted(head):
 
 
 def parse(data):
-    """Return (response_timestamp, journeys) with only the wanted operators."""
+    """(response timestamp, wanted journeys)"""
     ts, journeys, near = None, [], []
     for _, el in ET.iterparse(io.BytesIO(data), events=("end",)):
         name = local(el.tag)
