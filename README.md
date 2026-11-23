@@ -38,8 +38,7 @@ docker compose -f docker-compose.example.yml up -d --build
 
 Daily, from cron (`scripts/daily.sh`): fetch the newest timetable, refresh the
 station table and `route_ids.txt`, write the train numbers of today and tomorrow
-(S-Bahn and regional trains; U-Bahn numbers come from GTI or SIRI, AKN numbers
-from SIRI):
+(S-Bahn, AKN and regional trains; U-Bahn numbers come from GTI or SIRI):
 
 ```
 17 6 * * * cd /path/to/transitfeeds-de && DATA=/path/to/data STATIONS_CSV=/path/to/openstation/stations.csv STATION_PREFIX=de:02000 ROUTE_IDS_COPY=/path/to/data/delfi/route_ids.txt ON_NEW_ROUTES="docker compose -f /path/to/docker-compose.yml restart delfi-logger" scripts/daily.sh >> /path/to/data/daily.log 2>&1
@@ -70,7 +69,8 @@ one, 57 not found.
 - For DB rail lines (S-Bahn, RE, RB) the static `trip_short_name` is the train
   number, zero-padded (`011546` = RE7 11546), the same number SIRI and OpenBoards
   report. For AKN the static number loses the leading 2 of six-digit numbers
-  (`068157` for 268157); SIRI has the full one.
+  (`068157` for 268157); `train_number_prefix_fix` in the region file restores
+  it (checked against SIRI on 23.11.2026: 290 of 309 trips, none different).
 - Hamburg U-Bahn trips carry the Hochbahn train number in SIRI as `sbskop.NNNNNN`;
   replacement or swapped trains run with +7000 (hour + 70).
 - Some stations have two EVA numbers (main line and S-Bahn, e.g. Hamburg Hbf
