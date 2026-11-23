@@ -63,3 +63,10 @@ def test_rail_trips_of_the_day_keyed_by_line_station_and_departure(tmp_path):
         "S7|de:02000:10952|2026-11-24T00:17": [["47027", "de:02000:49950"], ["47028", "de:02000:10950"]],
         "S7|de:02000:49950|2026-11-24T00:05": [["47028", "de:02000:10952"]],
     }
+
+
+def test_prefix_fix_restores_the_leading_digit(tmp_path):
+    feed, _ = make_feed(tmp_path)
+    fixes = {"10833": ["06", "26"]}
+    result = tn.train_numbers(feed, date(2026, 11, 23), {"10833"}, None, fixes)
+    assert result["trips"] == {"e": "268157"}

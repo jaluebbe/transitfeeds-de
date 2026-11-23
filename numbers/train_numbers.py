@@ -4,7 +4,9 @@ Usage:
   python numbers/train_numbers.py GTFS_DIR_OR_ZIP --region regions/hamburg.json --date 2026-11-23 [--out data/numbers]
 
 For the region's "train_number_agencies" (rail route types only), trip_short_name
-is the train number (011546 = 11546). Writes train_numbers_YYYYMMDD.json:
+is the train number (011546 = 11546). "train_number_prefix_fix" repairs agencies
+whose numbers lost a leading digit (AKN: 068157 -> 268157). Writes
+train_numbers_YYYYMMDD.json:
 
   {"date": "2026-11-23",
    "stops": {"RE7|de:02000:10950|2026-11-23T10:05": [["11546", "de:02000:10951"]], ...},
@@ -86,18 +88,27 @@ def clock(day: date, gtfs_time: str) -> str:
     return at.strftime("%Y-%m-%dT%H:%M")
 
 
-def train_numbers(feed: Feed, day: date, agencies: set, aliases: dict | None = None) -> dict:
+def train_numbers(
+    feed: Feed, day: date, agencies: set, aliases: dict | None = None, fixes: dict | None = None
+) -> dict:
     routes = {
-        r["route_id"]: r["route_short_name"]
+        r["route_id"]: (r["route_short_name"], r["agency_id"])
         for r in feed.rows("routes.txt")
         if r["agency_id"] in agencies and r["route_type"] in RAIL_TYPES
     }
     services = active_services(feed, day)
     trips = {}
     for t in feed.rows("trips.txt"):
-        number = (t.get("trip_short_name") or "").lstrip("0")
-        if t["route_id"] in routes and t["service_id"] in services and number.isdigit():
-            trips[t["trip_id"]] = (routes[t["route_id"]], number)
+        if t["route_id"] not in routes or t["service_id"] not in services:
+            continue
+        line, agency = routes[t["route_id"]]
+        short = t.get("trip_short_name") or ""
+        old, new = (fixes or {}).get(agency, ("", ""))
+        if old and short.startswith(old):
+            short = new + short[len(old):]
+        number = short.lstrip("0")
+        if number.isdigit():
+            trips[t["trip_id"]] = (line, number)
 
     calls = {}
     for s in feed.rows("stop_times.txt"):
@@ -132,7 +143,8 @@ def main(argv=None):
     if not agencies:
         sys.exit("region has no train_number_agencies")
     aliases = eva_aliases(a.stations) if a.stations else None
-    result = train_numbers(Feed(a.src), a.date, agencies, aliases)
+    fixes = region.get("train_number_prefix_fix")
+    result = train_numbers(Feed(a.src), a.date, agencies, aliases, fixes)
     a.out.mkdir(parents=True, exist_ok=True)
     target = a.out / f"train_numbers_{a.date:%Y%m%d}.json"
     tmp = target.with_suffix(".tmp")

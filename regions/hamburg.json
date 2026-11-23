@@ -47,7 +47,13 @@
     "10434",
     "10435",
     "10919",
-    "10931"
+    "10931",
+    "10833"
   ],
-  "train_number_note": "trip_short_name is the train number for these agencies (rail route types only); AKN (10833) loses the leading 2 of six-digit numbers, so it is not listed"
+  "train_number_prefix_fix": {
+    "10833": [
+      "06",
+      "26"
+    ]
+  }
 }
