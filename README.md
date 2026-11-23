@@ -23,6 +23,7 @@ other regions need their own.
 | `stations/openstation_netex.py` | Download DB OpenStation NeTEx (all stations) as `stations.csv` |
 | `stations/filter_stations.py` | Reduce it to the stations of a filtered GTFS, one row per EVA number |
 | `numbers/train_numbers.py` | Train numbers of one day from the timetable, by line, station and departure |
+| `scripts/daily.sh` | Daily run of the above |
 
 ## Setup
 
@@ -35,30 +36,25 @@ repository.
 docker compose -f docker-compose.example.yml up -d --build
 ```
 
-Timetable, daily:
+Daily, from cron (`scripts/daily.sh`): fetch the newest timetable, refresh the
+station table and `route_ids.txt`, write the train numbers of today and tomorrow
+(S-Bahn and regional trains; U-Bahn numbers come from GTI or SIRI, AKN numbers
+from SIRI):
 
 ```
-python gtfs/fetch_delfi.py --region regions/hamburg.json   # data/gtfs/hamburg_gtfs_YYYYMMDD.zip
+17 6 * * * cd /path/to/transitfeeds-de && DATA=/path/to/data STATIONS_CSV=/path/to/openstation/stations.csv STATION_PREFIX=de:02000 ROUTE_IDS_COPY=/path/to/data/delfi/route_ids.txt ON_NEW_ROUTES="docker compose -f /path/to/docker-compose.yml restart delfi-logger" scripts/daily.sh >> /path/to/data/daily.log 2>&1
 ```
 
-Put `route_ids.txt` of the reduced feed into the DELFI logger's data directory
-(`ROUTE_IDS`); DELFI route IDs change between exports.
-
-Stations, occasionally (57 requests of the 7,500 per day):
+`DELFI_GTFS_URL` goes into `.env` in the repository directory. The station
+table comes from OpenStation, occasionally (57 of the 7,500 requests per day):
 
 ```
-python stations/openstation_netex.py openstation_out
-python stations/filter_stations.py openstation_out/stations.csv stations_hamburg.csv \
-    --gtfs-stops hamburg_gtfs_YYYYMMDD/stop_ids.txt --prefix de:02000
+python stations/openstation_netex.py /path/to/openstation
 ```
 
-Train numbers, daily (S-Bahn and regional trains; the U-Bahn number comes from
-GTI or SIRI, AKN numbers from SIRI):
-
-```
-python numbers/train_numbers.py data/gtfs/hamburg_gtfs_YYYYMMDD.zip --region regions/hamburg.json \
-    --date 2026-11-23 --stations stations_hamburg.csv    # data/numbers/train_numbers_20261123.json
-```
+Output: `gtfs/<region>_gtfs_YYYYMMDD.zip`, `gtfs/current/` (stop and route IDs
+of the newest timetable), `gtfs/stations_<region>.csv` and
+`numbers/train_numbers_YYYYMMDD.json` below `DATA`.
 
 Each key `LINE|de:<AGS>:<station>|YYYY-MM-DDTHH:MM` (planned local departure)
 holds `[number, next station]` pairs: trains of one line leaving a station in
